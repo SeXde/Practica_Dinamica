@@ -5,11 +5,12 @@ import numpy as np
 
 
 class Step(ABC):
-    def __init__(self, step_name: str):
+    def __init__(self, step_name: str, debug: bool = False):
         self.step_name = step_name
+        self.debug = debug
 
     @abstractmethod
-    def run(self, inputs, debug: bool):
+    def run(self, inputs):
         pass
 
     def debug_step(self, image):
@@ -19,14 +20,14 @@ class Step(ABC):
 
 class BackgroundSubtractionStep(Step):
 
-    def __init__(self, step_name: str, bs_alg):
-        super().__init__(step_name)
+    def __init__(self, step_name: str, bs_alg, debug: bool = False):
+        super().__init__(step_name, debug)
         self.bs_alg = bs_alg
 
-    def run(self, inputs, debug):
+    def run(self, inputs):
         frame = inputs
         background_image = self.bs_alg.apply(frame)
-        if debug:
+        if self.debug:
             self.debug_step(background_image)
         return background_image
 
@@ -41,17 +42,17 @@ class BoundingBoxStep(Step):
         bs_filtered = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
         return bs_filtered
 
-    def __init__(self, step_name: str):
-        super().__init__(step_name)
+    def __init__(self, step_name: str, debug: bool = False):
+        super().__init__(step_name, debug)
 
-    def run(self, inputs, debug):
+    def run(self, inputs):
         bs_raw = inputs
         bs_filtered = self.__filter_bs(bs_raw)
         contours, _ = cv2.findContours(bs_filtered, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         if contours:
             all_contour_points = np.concatenate(contours)
             hull = cv2.convexHull(all_contour_points)
-            if debug:
+            if self.debug:
                 debug_image = bs_raw.copy()
                 cv2.drawContours(debug_image, [hull], -1, (0, 255, 0), 3)
                 self.debug_step(debug_image)
