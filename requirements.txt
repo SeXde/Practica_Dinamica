@@ -1,4 +1,2 @@
-cmake==3.29.2
 numpy==1.26.4
 opencv-python==4.9.0.80
-pybgs==3.3.0.post2
