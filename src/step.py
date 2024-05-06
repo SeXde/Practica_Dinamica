@@ -62,6 +62,7 @@ class BoundingBoxStep(Step):
 class KalmanFilterStep(Step):
     def run(self, inputs):
         z = inputs
+        z = np.array([z]).T
         prediction = self.__predict()
         estimation = self.__update(z)
         return prediction, estimation
@@ -124,3 +125,15 @@ class KalmanFilterStep(Step):
         I = np.eye(self.H.shape[1])
         self.P = (I - K @ self.H) @ self.P
         return self.x
+
+
+class CentroidStep(Step):
+
+    def __init__(self, step_name: str, debug: bool = False):
+        super().__init__(step_name, debug)
+
+    def run(self, inputs):
+        x, y, w, h = inputs
+        centroid_x = x + w / 2
+        centroid_y = y + h / 2
+        return centroid_x, centroid_y

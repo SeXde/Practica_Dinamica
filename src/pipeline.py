@@ -20,6 +20,8 @@ class Pipeline:
             input_params = current_step.run(input_params)
             step_elapsed = (datetime.now() - step_time).total_seconds()
             self.times.append(step_elapsed)
+            if input_params is None:
+                break
         end_time = datetime.now()
         elapsed_time = (end_time - start_time).total_seconds()
         if not self.mute:
