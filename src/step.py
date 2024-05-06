@@ -57,3 +57,70 @@ class BoundingBoxStep(Step):
                 self.debug_step(debug_image)
             return cv2.boundingRect(hull)
         return None
+
+
+class KalmanFilterStep(Step):
+    def run(self, inputs):
+        z = inputs
+        prediction = self.__predict()
+        estimation = self.__update(z)
+        return prediction, estimation
+
+    def __init__(self,
+                 step_name: str,
+                 x: np.array = np.array([[0, 0, 0, 0]]).T,
+                 P: np.array = np.eye(4),
+                 A: np.array = np.array([[1, 0, 1, 0],
+                                         [0, 1, 0, 1],
+                                         [0, 0, 1, 0],
+                                         [0, 0, 0, 1]]),
+                 H: np.array = np.array([[1, 0, 0, 0],
+                                         [0, 1, 0, 0]]),
+                 R: np.array = np.eye(2) * 0.01,
+                 Q: np.array = np.eye(4) * 0.1,
+                 debug: bool = False):
+        """
+        Initializes the KalmanFilter.
+
+        Parameters:
+            - x (np.array): the state of the system.
+            - P (np.array): the covariance matrix of the estimation error.
+            - A (np.array): the state transition matrix.
+            - H (np.array): the measurement matrix.
+            - R (np.array): the covariance matrix of the measurement noise.
+            - Q (np.array): the covariance matrix of the process noise.
+        """
+        super().__init__(step_name, debug)
+        self.x = x
+        self.P = P
+        self.A = A
+        self.H = H
+        self.R = R
+        self.Q = Q
+
+    def __predict(self) -> np.array:
+        """
+        The prediction step
+
+        Returns:
+            - x (np.array): the predicted state.
+        """
+        self.x = self.A @ self.x
+        self.P = self.A @ (self.P @ self.A.T) + self.Q
+        return self.x
+
+    def __update(self, z: np.array) -> np.array:
+        """
+        The update or correction step
+
+        Parameters:
+            - z (np.array): the measurement.
+
+        Returns:
+            - x (np.array): the final estimate of the state.
+        """
+        K = self.P @ self.H.T @ np.linalg.inv((self.H @ self.P @ self.H.T) + self.R)
+        self.x = self.x + K @ (z - self.H @ self.x)
+        I = np.eye(self.H.shape[1])
+        self.P = (I - K @ self.H) @ self.P
+        return self.x
