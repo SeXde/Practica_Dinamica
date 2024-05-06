@@ -1,4 +1,3 @@
-import warnings
 from abc import ABC, abstractmethod
 import cv2
 import numpy as np
@@ -57,5 +56,4 @@ class BoundingBoxStep(Step):
                 cv2.drawContours(debug_image, [hull], -1, (0, 255, 0), 3)
                 self.debug_step(debug_image)
             return cv2.boundingRect(hull)
-        warnings.warn('No bounding box found', UserWarning)
         return None

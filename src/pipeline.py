@@ -5,11 +5,13 @@ from src import step
 
 class Pipeline:
 
-    def __init__(self, name: str, steps: list[step]):
+    def __init__(self, name: str, steps: list[step], mute: bool = True):
         self.steps = steps
         self.times = []
         self.name = name
-        print(f'`{self.name}` has been successfully created with {len(self.steps)} steps.')
+        self.mute = mute
+        if not self.mute:
+            print(f'`{self.name}` has been successfully created with {len(self.steps)} steps.')
 
     def run(self, input_params):
         start_time = datetime.now()
@@ -20,12 +22,14 @@ class Pipeline:
             self.times.append(step_elapsed)
         end_time = datetime.now()
         elapsed_time = (end_time - start_time).total_seconds()
-        print(
-            f'Pipeline ´{self.name}´ is completed in {elapsed_time:.2f} seconds')
+        if not self.mute:
+            print(
+                f'Pipeline ´{self.name}´ is completed in {elapsed_time:.2f} seconds')
         self.times = np.array(self.times)
         arg_max = np.argmax(self.times)
-        print(
-            f'The slowest step was {self.steps[arg_max].step_name} with {self.times[arg_max]} seconds'
-        )
+        if not self.mute:
+            print(
+                f'The slowest step was ´{self.steps[arg_max].step_name}´ with {self.times[arg_max]} seconds'
+            )
         self.times = []
         return input_params
