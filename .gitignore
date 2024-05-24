@@ -161,3 +161,4 @@ cython_debug/
 data/video/
 data/bs/
 .idea/
+src/evaluator/evaluation_plot.png
