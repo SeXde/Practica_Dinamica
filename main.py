@@ -6,7 +6,7 @@ import numpy as np
 from src.constants import VIDEOS_PATH, BS_PATH
 from src.evaluator.pipeline_evaluator import PipelineEvaluator
 from src.pipeline import Pipeline
-from src.step import BackgroundSubtractionStep, BoundingBoxStep, CentroidStep, KalmanFilterStep, BSCentroidStep
+from src.step import BackgroundSubtractionStep, BoundingBoxStep, CentroidStep, KalmanFilterStep, BSCentroidStep, PFStep
 
 kalman_pipeline = Pipeline('Kalman pipeline',
                            [
@@ -16,6 +16,14 @@ kalman_pipeline = Pipeline('Kalman pipeline',
                                CentroidStep('Centroid step'),
                                KalmanFilterStep('Kalman filter step')
                            ])
+
+pf_pipeline = Pipeline('Particle filter pipeline',
+                       [
+                           BackgroundSubtractionStep('BS Step',
+                                                     cv2.createBackgroundSubtractorMOG2(detectShadows=True)),
+                           PFStep(100, (300, 300), (1002, 1000), 'Particle filter step'),
+                           CentroidStep('Centroid step')
+                       ])
 
 gt_pipeline = Pipeline('GT pipeline',
                        [
@@ -36,29 +44,40 @@ while x_cap.isOpened() and y_cap.isOpened():
     if not ret_x or not ret_y:
         break
 
+    # GT Results
+
     frame_y = cv2.cvtColor(frame_y, cv2.COLOR_BGR2GRAY)
     _, frame_y = cv2.threshold(frame_y, 1, 255, cv2.THRESH_BINARY)
     centroid, _ = gt_pipeline.run(frame_y)
     gt_estimations.append(centroid)
 
-    output_frame = frame_x.copy()
-    run_result_kalman, successful_kalman = kalman_pipeline.run(frame_x)
+    # Kalman results
+
+    run_result_kalman, successful_kalman = kalman_pipeline.run(frame_x.copy())
     if not successful_kalman:
         kalman_estimations.append(run_result_kalman)
-        continue
+    else:
+        estimation_kalman, correction_kalman = run_result_kalman
+        kalman_estimations.append(estimation_kalman.flatten()[:2])
 
-    estimation_kalman, correction_kalman = run_result_kalman
-    kalman_estimations.append(estimation_kalman.flatten()[:2].astype(np.int8))
+    # PF results
+
+    run_result_pf, successful_pf = pf_pipeline.run(frame_x.copy())
+    if not successful_pf:
+        pf_estimations.append(run_result_pf)
+    else:
+        centroid_pf = run_result_pf
+        pf_estimations.append(centroid_pf)
 
 cv2.destroyAllWindows()
 x_cap.release()
 y_cap.release()
 
-x = np.array(kalman_estimations)
-x = np.expand_dims(x, axis=0)
+x_kalman = np.array(kalman_estimations)
+x_pf = np.array(pf_estimations)
+x = np.stack((x_kalman, x_pf))
 y = np.array(gt_estimations)
 
-pipeline_names = ['Kalman']
+pipeline_names = ['Kalman', 'PF']
 evaluator = PipelineEvaluator(x, y, pipeline_names)
 evaluator.plot_evaluation(save=False, sample_rate=60)
-

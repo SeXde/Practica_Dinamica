@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import cv2
 import numpy as np
 
+from src.particle_filter.particle_filter import ParticleFilter
+
 
 class Step(ABC):
     def __init__(self, step_name: str, debug: bool = False):
@@ -125,6 +127,18 @@ class KalmanFilterStep(Step):
         I = np.eye(self.H.shape[1])
         self.P = (I - K @ self.H) @ self.P
         return self.x
+
+
+class PFStep(Step):
+
+    def __init__(self, num_particles: int, particle_shape: (int, int), image_shape: (int, int),
+                 step_name: str, debug: bool = False):
+        super().__init__(step_name, debug)
+        self.pf = ParticleFilter(num_particles, particle_shape, image_shape)
+
+    def run(self, inputs):
+        bs_foreground = inputs
+        return self.pf.track(bs_foreground)
 
 
 class CentroidStep(Step):
