@@ -5,11 +5,12 @@ from src import step
 
 class Pipeline:
 
-    def __init__(self, name: str, steps: list[step], mute: bool = True):
+    def __init__(self, name: str, steps: list[step], mute: bool = True, default_output=(np.inf, np.inf)):
         self.steps = steps
         self.times = []
         self.name = name
         self.mute = mute
+        self.default_output = default_output
         if not self.mute:
             print(f'`{self.name}` has been successfully created with {len(self.steps)} steps.')
 
@@ -21,7 +22,7 @@ class Pipeline:
             step_elapsed = (datetime.now() - step_time).total_seconds()
             self.times.append(step_elapsed)
             if input_params is None:
-                break
+                return self.default_output
         end_time = datetime.now()
         elapsed_time = (end_time - start_time).total_seconds()
         if not self.mute:

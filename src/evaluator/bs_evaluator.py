@@ -6,8 +6,10 @@ import pandas as pd
 import seaborn as sns
 from sklearn.metrics import precision_recall_fscore_support
 
+from evaluator import Evaluator
 
-class BSEvaluator:
+
+class BSEvaluator(Evaluator):
     """
     Class to evaluate multiple background subtraction methods.
 
@@ -66,7 +68,7 @@ class BSEvaluator:
         self.bs = {name: bs_x for bs_x, name in zip(x, bs_names)}
         self.y = y
 
-    def plot_evaluation(self):
+    def plot_evaluation(self, save=True):
         """
         Plots average precision, recall, and F1-score for each background subtraction method.
         """
@@ -99,6 +101,9 @@ class BSEvaluator:
         plt.ylabel('Score')
         plt.xticks(rotation=45)
         plt.legend(title='Metric')
+
+        if save:
+            plt.savefig('bs_evaluation_plot.png')
 
         plt.tight_layout()
         plt.show()
@@ -139,4 +144,4 @@ if __name__ == "__main__":
     bs_names = ['Mean bs', 'Mode bs', 'GMM bs']
 
     evaluator = BSEvaluator(x, y, bs_names)
-    evaluator.plot_evaluation()
+    evaluator.plot_evaluation(save=False)
