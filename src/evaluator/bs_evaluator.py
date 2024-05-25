@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.metrics import precision_recall_fscore_support
 
-from evaluator import Evaluator
+from .evaluator import Evaluator
 
 
 class BSEvaluator(Evaluator):
@@ -86,8 +86,7 @@ class BSEvaluator(Evaluator):
             avg_precision = np.mean(precisions)
             avg_recall = np.mean(recalls)
             avg_f1 = np.mean(f1_scores)
-            data['Method'].append(
-                f'{name}\n(Precision: {avg_precision:.2f}, Recall: {avg_recall:.2f}, F1: {avg_f1:.2f})')
+            data['Method'].append(f'{name}')
             data['Precision'].append(avg_precision)
             data['Recall'].append(avg_recall)
             data['F1 Score'].append(avg_f1)
@@ -95,7 +94,12 @@ class BSEvaluator(Evaluator):
         df = pd.DataFrame(data)
         plt.figure(figsize=(10, 6))
 
-        sns.barplot(data=df.melt(id_vars='Method'), x='Method', y='value', hue='variable', palette='muted')
+        ax = sns.barplot(data=df.melt(id_vars='Method'), x='Method', y='value', hue='variable', palette='muted')
+
+        for p in ax.patches:
+            height = p.get_height()
+            ax.text(p.get_x() + p.get_width() / 2., height + 0.01, f'{height:.2f}', ha='center')
+
         plt.title('Background Subtraction Evaluation')
         plt.xlabel('Method')
         plt.ylabel('Score')

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-from src.evaluator.evaluator import Evaluator
+from .evaluator import Evaluator
 
 
 class PipelineEvaluator(Evaluator):
