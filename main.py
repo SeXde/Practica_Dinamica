@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 
-from src.constants import VIDEOS_PATH, BS_PATH, VIDEO_NAME
+from src.constants import VIDEOS_PATH, BS_PATH, VIDEO_NAME, INIT_FRAME_NAME
 from src.evaluator.pipeline_evaluator import PipelineEvaluator
 from src.pipeline import Pipeline
 from src.step import (BackgroundSubtractionStep, BoundingBoxStep, CentroidStep,
@@ -29,14 +29,14 @@ pf_pipeline = Pipeline('Particle filter pipeline',
 
 ms_pipeline = Pipeline('Mean Shift pipeline',
                        [
-                           MeanShiftStep(init_frame=cv2.imread(os.path.join(VIDEOS_PATH, 'init_frame_54138969.png')),
+                           MeanShiftStep(init_frame=cv2.imread(os.path.join(VIDEOS_PATH, INIT_FRAME_NAME)),
                                          init_window=(430, 420, 100, 70), step_name='Mean Shift step'),
                            CentroidStep('Centroid step')
                        ])
 
 cs_pipeline = Pipeline('Cam Shift pipeline',
                        [
-                           CamShiftStep(init_frame=cv2.imread(os.path.join(VIDEOS_PATH, 'init_frame_54138969.png')),
+                           CamShiftStep(init_frame=cv2.imread(os.path.join(VIDEOS_PATH, INIT_FRAME_NAME)),
                                         init_window=(430, 420, 100, 70), step_name='Cam Shift step'),
                            CentroidStep('Centroid step')
                        ])
