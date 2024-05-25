@@ -136,17 +136,20 @@ class BSEvaluator(Evaluator):
         gt_correct = not np.any(non_zero_values_ground_truth)
         assert gt_correct is True
 
-        precision, recall, f1, _ = precision_recall_fscore_support(ground_truth.flatten(), estimation.flatten(),
-                                                                   labels=[0, 255], zero_division=True)
-
-        return precision[0], recall[0], f1[0]
+        estimation_mask = estimation == 255
+        ground_truth_mask = ground_truth == 255
+        estimation_real_foreground = np.count_nonzero(estimation_mask & ground_truth_mask)
+        recall = estimation_real_foreground / (np.count_nonzero(ground_truth_mask) + epsilon)
+        precision = estimation_real_foreground / (np.count_nonzero(estimation_mask) + epsilon)
+        f1 = 2 * (recall * precision) / (recall + precision + epsilon)
+        return precision, recall, f1
 
 
 if __name__ == "__main__":
     x = np.random.randint(0, 2, size=(3, 10, 10, 10), dtype=np.uint8) * 255
-    # x = np.zeros((3, 10, 10, 10), dtype=np.uint8)
+    #x = np.ones((3, 10, 10, 10), dtype=np.uint8) * 255
     y = np.random.randint(0, 2, size=(10, 10, 10), dtype=np.uint8) * 255
-    # y = np.zeros((10, 10, 10), dtype=np.uint8)
+    #y = np.ones((10, 10, 10), dtype=np.uint8) * 255
     bs_names = ['Mean bs', 'Mode bs', 'GMM bs']
 
     evaluator = BSEvaluator(x, y, bs_names)
