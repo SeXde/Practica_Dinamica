@@ -58,7 +58,7 @@ while x_cap.isOpened() and y_cap.isOpened():
         kalman_estimations.append(run_result_kalman)
     else:
         estimation_kalman, correction_kalman = run_result_kalman
-        kalman_estimations.append(estimation_kalman.flatten()[:2])
+        kalman_estimations.append(correction_kalman.flatten()[:2])
 
     # PF results
 

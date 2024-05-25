@@ -96,13 +96,17 @@ class PipelineEvaluator(Evaluator):
         # Convert to DataFrame for seaborn
         df = pd.DataFrame(data, columns=['Pipeline', 'Frame', 'Distance'])
 
+        # Limit the data for the first plot to distances <= 200
+        df_filtered = df[df['Distance'] <= 200]
+
         # Define color palette
         palette = sns.color_palette("tab10", len(self.pipeline))
         color_mapping = {name: color for name, color in zip(self.pipeline.keys(), palette)}
 
         # Plot the line plot using seaborn
         plt.subplot(2, 1, 1)
-        sns.lineplot(data=df[::sample_rate], x='Frame', y='Distance', hue='Pipeline', marker='o', palette=color_mapping)
+        sns.lineplot(data=df_filtered[::sample_rate], x='Frame', y='Distance', hue='Pipeline', marker='o',
+                     palette=color_mapping)
 
         # Plot the points with infinite distances as 'x' at y = 0
         for name, points in inf_data.items():
@@ -113,7 +117,7 @@ class PipelineEvaluator(Evaluator):
         plt.axhline(0, color='gray', linestyle='--', linewidth=0.5)
 
         # Add title and labels
-        plt.title('Distance per Frame for Each Pipeline')
+        plt.title('Distance per Frame for Each Pipeline (Distances <= 200)')
         plt.xlabel('Frame')
         plt.ylabel('Distance')
 
@@ -123,24 +127,23 @@ class PipelineEvaluator(Evaluator):
         labels.append('Undetected Points')
         plt.legend(handles=handles, labels=labels, loc='upper right')
 
-        # Calculate accumulated distances including penalties
+        # Calculate mean distances including penalties for the second plot
         all_distances = data + penalized_distances
         df_all = pd.DataFrame(all_distances, columns=['Pipeline', 'Frame', 'Distance'])
-        accumulated_distances = df_all.groupby('Pipeline')['Distance'].sum().reset_index()
+        mean_distances = df_all.groupby('Pipeline')['Distance'].mean().reset_index()
 
         # Preserve original order for coloring
-        accumulated_distances['Color'] = accumulated_distances['Pipeline'].map(color_mapping)
-        sorted_pipelines = accumulated_distances.sort_values(by='Distance')['Pipeline']
+        sorted_pipelines = mean_distances.sort_values(by='Distance')['Pipeline']
 
-        # Plot the bar plot
+        # Plot the bar plot for mean distances
         plt.subplot(2, 1, 2)
-        sns.barplot(data=accumulated_distances, x='Pipeline', y='Distance', palette=color_mapping,
+        sns.barplot(data=mean_distances, x='Pipeline', y='Distance', palette=color_mapping,
                     order=sorted_pipelines)
 
         # Add title and labels
-        plt.title('Accumulated Distance per Pipeline')
+        plt.title('Mean Distance per Pipeline')
         plt.xlabel('Pipeline')
-        plt.ylabel('Accumulated Distance')
+        plt.ylabel('Mean Distance')
 
         if save:
             plt.savefig('pipeline_evaluation_plot.png')
