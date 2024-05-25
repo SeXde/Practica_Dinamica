@@ -79,8 +79,8 @@ class KalmanFilterStep(Step):
                                          [0, 0, 0, 1]]),
                  H: np.array = np.array([[1, 0, 0, 0],
                                          [0, 1, 0, 0]]),
-                 R: np.array = np.eye(2) * 0.01,
-                 Q: np.array = np.eye(4) * 0.1,
+                 R: np.array = np.eye(2) * 15,
+                 Q: np.array = np.eye(4) * 0.001,
                  debug: bool = False):
         """
         Initializes the KalmanFilter.
