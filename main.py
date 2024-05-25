@@ -3,10 +3,12 @@ import os
 import cv2
 import numpy as np
 
-from src.constants import VIDEOS_PATH, BS_PATH
+from src.constants import VIDEOS_PATH, BS_PATH, VIDEO_NAME
 from src.evaluator.pipeline_evaluator import PipelineEvaluator
 from src.pipeline import Pipeline
-from src.step import BackgroundSubtractionStep, BoundingBoxStep, CentroidStep, KalmanFilterStep, BSCentroidStep, PFStep
+from src.step import (BackgroundSubtractionStep, BoundingBoxStep, CentroidStep,
+                      KalmanFilterStep, BSCentroidStep, PFStep, MeanShiftStep,
+                      CamShiftStep)
 
 kalman_pipeline = Pipeline('Kalman pipeline',
                            [
@@ -25,18 +27,33 @@ pf_pipeline = Pipeline('Particle filter pipeline',
                            CentroidStep('Centroid step')
                        ])
 
+ms_pipeline = Pipeline('Mean Shift pipeline',
+                       [
+                           MeanShiftStep(init_frame=cv2.imread(os.path.join(VIDEOS_PATH, 'init_frame_54138969.png')),
+                                         init_window=(430, 420, 100, 70), step_name='Mean Shift step'),
+                           CentroidStep('Centroid step')
+                       ])
+
+cs_pipeline = Pipeline('Cam Shift pipeline',
+                       [
+                           CamShiftStep(init_frame=cv2.imread(os.path.join(VIDEOS_PATH, 'init_frame_54138969.png')),
+                                        init_window=(430, 420, 100, 70), step_name='Cam Shift step'),
+                           CentroidStep('Centroid step')
+                       ])
+
 gt_pipeline = Pipeline('GT pipeline',
                        [
                            BSCentroidStep('BS Centroid step')
                        ])
 
-video_name = 'Walking.54138969.mp4'
-x_cap = cv2.VideoCapture(os.path.join(VIDEOS_PATH, video_name))
-y_cap = cv2.VideoCapture(os.path.join(BS_PATH, video_name))
+x_cap = cv2.VideoCapture(os.path.join(VIDEOS_PATH, VIDEO_NAME))
+y_cap = cv2.VideoCapture(os.path.join(BS_PATH, VIDEO_NAME))
 
 kalman_estimations = []
 pf_estimations = []
 gt_estimations = []
+ms_estimations = []
+cs_estimations = []
 
 while x_cap.isOpened() and y_cap.isOpened():
     ret_x, frame_x = x_cap.read()
@@ -45,14 +62,12 @@ while x_cap.isOpened() and y_cap.isOpened():
         break
 
     # GT Results
-
     frame_y = cv2.cvtColor(frame_y, cv2.COLOR_BGR2GRAY)
     _, frame_y = cv2.threshold(frame_y, 1, 255, cv2.THRESH_BINARY)
     centroid, _ = gt_pipeline.run(frame_y)
     gt_estimations.append(centroid)
 
     # Kalman results
-
     run_result_kalman, successful_kalman = kalman_pipeline.run(frame_x.copy())
     if not successful_kalman:
         kalman_estimations.append(run_result_kalman)
@@ -61,7 +76,6 @@ while x_cap.isOpened() and y_cap.isOpened():
         kalman_estimations.append(correction_kalman.flatten()[:2])
 
     # PF results
-
     run_result_pf, successful_pf = pf_pipeline.run(frame_x.copy())
     if not successful_pf:
         pf_estimations.append(run_result_pf)
@@ -69,15 +83,33 @@ while x_cap.isOpened() and y_cap.isOpened():
         centroid_pf = run_result_pf
         pf_estimations.append(centroid_pf)
 
+    # MS results
+    run_result_ms, successful_ms = ms_pipeline.run(frame_x.copy())
+    if not successful_ms:
+        ms_estimations.append(run_result_ms)
+    else:
+        centroid_ms = run_result_ms
+        ms_estimations.append(centroid_ms)
+
+    # CS results
+    run_result_cs, successful_cs = cs_pipeline.run(frame_x.copy())
+    if not successful_cs:
+        cs_estimations.append(run_result_cs)
+    else:
+        centroid_cs = run_result_cs
+        cs_estimations.append(centroid_cs)
+
 cv2.destroyAllWindows()
 x_cap.release()
 y_cap.release()
 
 x_kalman = np.array(kalman_estimations)
 x_pf = np.array(pf_estimations)
-x = np.stack((x_kalman, x_pf))
+x_ms = np.array(ms_estimations)
+x_cs = np.array(cs_estimations)
+x = np.stack((x_kalman, x_pf, x_ms, x_cs))
 y = np.array(gt_estimations)
 
-pipeline_names = ['Kalman', 'PF']
+pipeline_names = ['Kalman', 'PF', 'MShift', 'CShift']
 evaluator = PipelineEvaluator(x, y, pipeline_names)
 evaluator.plot_evaluation(save=False, sample_rate=60)

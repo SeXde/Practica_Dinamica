@@ -169,3 +169,47 @@ class BSCentroidStep(Step):
         centroid_y = int(M['m01'] / M['m00'] + epsilon)
 
         return centroid_x, centroid_y
+
+
+class MeanShiftStep(Step):
+
+    def __init__(self, init_frame: np.array, init_window: (int, int, int, int),
+                 step_name: str, debug: bool = False):
+        super().__init__(step_name, debug)
+        self.track_window = init_window
+        x, y, w, h = init_window
+        self.roi = init_frame[y:y + h, x:x + w]
+        self.hsv_roi = cv2.cvtColor(self.roi, cv2.COLOR_BGR2HSV)
+        self.mask = cv2.inRange(self.hsv_roi, np.array((124, 41, 0)), np.array((162, 166, 135)))
+        self.term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
+        self.roi_hist = cv2.calcHist([self.hsv_roi], [0], self.mask, [180], [0, 180])
+
+    def run(self, inputs):
+        frame = inputs
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        dst = cv2.calcBackProject([hsv], [0], self.roi_hist, [0, 180], 1)
+        _, self.track_window = cv2.meanShift(dst, self.track_window, self.term_crit)
+        return self.track_window
+
+
+class CamShiftStep(Step):
+
+    def __init__(self, init_frame: np.array, init_window: (int, int, int, int),
+                 step_name: str, debug: bool = False):
+        super().__init__(step_name, debug)
+        self.track_window = init_window
+        x, y, w, h = init_window
+        self.roi = init_frame[y:y + h, x:x + w]
+        self.hsv_roi = cv2.cvtColor(self.roi, cv2.COLOR_BGR2HSV)
+        self.mask = cv2.inRange(self.hsv_roi, np.array((124, 41, 0)), np.array((162, 166, 135)))
+        self.term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
+        self.roi_hist = cv2.calcHist([self.hsv_roi], [0], self.mask, [180], [0, 180])
+
+    def run(self, inputs):
+        frame = inputs
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        dst = cv2.calcBackProject([hsv], [0], self.roi_hist, [0, 180], 1)
+        _, self.track_window = cv2.CamShift(dst, self.track_window, self.term_crit)
+        return self.track_window
+
+
