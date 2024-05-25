@@ -22,7 +22,7 @@ class Pipeline:
             step_elapsed = (datetime.now() - step_time).total_seconds()
             self.times.append(step_elapsed)
             if input_params is None:
-                return self.default_output
+                return self.default_output, False
         end_time = datetime.now()
         elapsed_time = (end_time - start_time).total_seconds()
         if not self.mute:
@@ -35,4 +35,4 @@ class Pipeline:
                 f'The slowest step was ´{self.steps[arg_max].step_name}´ with {self.times[arg_max]} seconds'
             )
         self.times = []
-        return input_params
+        return input_params, True

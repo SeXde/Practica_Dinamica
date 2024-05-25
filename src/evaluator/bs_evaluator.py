@@ -129,6 +129,12 @@ class BSEvaluator(Evaluator):
         """
         assert estimation.dtype == np.uint8
         assert ground_truth.dtype == estimation.dtype
+        non_zero_values_estimation = np.logical_and(estimation != 0, estimation != 255)
+        estimation_correct = not np.any(non_zero_values_estimation)
+        assert estimation_correct is True
+        non_zero_values_ground_truth = np.logical_and(ground_truth != 0, ground_truth != 255)
+        gt_correct = not np.any(non_zero_values_ground_truth)
+        assert gt_correct is True
 
         precision, recall, f1, _ = precision_recall_fscore_support(ground_truth.flatten(), estimation.flatten(),
                                                                    labels=[0, 255], zero_division=True)

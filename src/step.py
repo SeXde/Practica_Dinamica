@@ -137,3 +137,21 @@ class CentroidStep(Step):
         centroid_x = x + w / 2
         centroid_y = y + h / 2
         return centroid_x, centroid_y
+
+
+class BSCentroidStep(Step):
+
+    def __init__(self, step_name: str, debug: bool = False):
+        super().__init__(step_name, debug)
+
+    def run(self, inputs, epsilon=1e-20):
+        subtraction_image = inputs
+        contours, _ = cv2.findContours(subtraction_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours) == 0:
+            return 0, 0
+        max_contour = max(contours, key=cv2.contourArea)
+        M = cv2.moments(max_contour)
+        centroid_x = int(M['m10'] / M['m00'] + epsilon)
+        centroid_y = int(M['m01'] / M['m00'] + epsilon)
+
+        return centroid_x, centroid_y

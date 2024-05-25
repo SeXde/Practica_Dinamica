@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-from evaluator import Evaluator
+from src.evaluator.evaluator import Evaluator
 
 
 class PipelineEvaluator(Evaluator):
@@ -63,7 +63,7 @@ class PipelineEvaluator(Evaluator):
         self.pipeline = {name: pipeline_x for pipeline_x, name in zip(x, pipeline_names)}
         self.y = y
 
-    def plot_evaluation(self, save=True, infinite_distance=10):
+    def plot_evaluation(self, save=True, infinite_distance=10, sample_rate=70):
         """
         Displays a plot showing the distance between points in x and y for each pipeline,
         and a bar plot showing the pipeline with the lowest accumulated distance.
@@ -74,6 +74,8 @@ class PipelineEvaluator(Evaluator):
             If True, the plot will be saved as 'pipeline_evaluation_plot.png'. Defaults to True.
         infinite_distance : float
             Distance value to use for penalizing pipelines with undetected points. Defaults to 10.
+        sample_rate : int
+            Rate of sampling frames for plotting the line plot. Defaults to 10.
         """
         plt.figure(figsize=(14, 10))
 
@@ -100,7 +102,7 @@ class PipelineEvaluator(Evaluator):
 
         # Plot the line plot using seaborn
         plt.subplot(2, 1, 1)
-        sns.lineplot(data=df, x='Frame', y='Distance', hue='Pipeline', marker='o', palette=color_mapping)
+        sns.lineplot(data=df[::sample_rate], x='Frame', y='Distance', hue='Pipeline', marker='o', palette=color_mapping)
 
         # Plot the points with infinite distances as 'x' at y = 0
         for name, points in inf_data.items():
@@ -132,7 +134,8 @@ class PipelineEvaluator(Evaluator):
 
         # Plot the bar plot
         plt.subplot(2, 1, 2)
-        sns.barplot(data=accumulated_distances, x='Pipeline', y='Distance', palette=color_mapping, order=sorted_pipelines)
+        sns.barplot(data=accumulated_distances, x='Pipeline', y='Distance', palette=color_mapping,
+                    order=sorted_pipelines)
 
         # Add title and labels
         plt.title('Accumulated Distance per Pipeline')
