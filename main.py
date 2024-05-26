@@ -14,7 +14,7 @@ from src.step import (
 kalman_pipeline = Pipeline(
     'Kalman pipeline',
     [
-        BackgroundSubtractionStep('BS Step', cv2.bgsegm.createBackgroundSubtractorGSOC()),
+        BackgroundSubtractionStep('BS Step', cv2.createBackgroundSubtractorMOG2()),
         BoundingBoxStep('BBOX step'),
         CentroidStep('Centroid step'),
         KalmanFilterStep('Kalman filter step')
@@ -24,7 +24,7 @@ kalman_pipeline = Pipeline(
 pf_pipeline = Pipeline(
     'Particle filter pipeline',
     [
-        BackgroundSubtractionStep('BS Step', cv2.bgsegm.createBackgroundSubtractorGSOC()),
+        BackgroundSubtractionStep('BS Step', cv2.createBackgroundSubtractorMOG2()),
         PFStep(100, (300, 300), (1002, 1000), 'Particle filter step'),
         CentroidStep('Centroid step')
     ]
